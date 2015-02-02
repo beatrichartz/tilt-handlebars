@@ -16,7 +16,7 @@ module Tilt
     def initialize_engine
       return if defined? ::Handlebars
       require_template_library 'handlebars'
-    end    
+    end
 
     def prepare
       @context = ::Handlebars::Context.new
@@ -26,17 +26,7 @@ module Tilt
 
 
     def evaluate(scope, locals = {}, &block)
-      # Based on LiquidTemplate
-      locals = locals.inject({}){ |h,(k,v)| h[k.to_s] = v ; h }
-      if scope.respond_to?(:to_h)
-        scope  = scope.to_h.inject({}){ |h,(k,v)| h[k.to_s] = v ; h }
-        locals = scope.merge(locals)
-      else
-        scope.instance_variables.each do |var|
-          key = var.to_s.delete("@")
-          locals[key] = scope.instance_variable_get(var) unless locals.has_key? key
-        end
-      end
+      locals = Marshal.load(Marshal.dump(locals)) #slow, but ok for now
 
       locals['yield'] = block.nil? ? '' : yield
       locals['content'] = locals['yield']
@@ -61,7 +51,7 @@ module Tilt
     end
 
     def load_partial(partial_name)
-      if Pathname.new(partial_name).absolute? 
+      if Pathname.new(partial_name).absolute?
         dir = ""
       elsif file
         dir = File.dirname file
@@ -77,10 +67,8 @@ module Tilt
     end
 
     private :load_partial
-    
+
   end
 
   register HandlebarsTemplate, 'handlebars', 'hbs'
 end
-
-
